@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { EntityManager } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { AuthCredentialsDTO } from './dto/auth-credentials.dto';
 import { User } from './user.entity';
-import { JwtService } from '@nestjs/jwt';
 import { IJwtPayload } from './jwt-payload.interface';
 
 @Injectable()

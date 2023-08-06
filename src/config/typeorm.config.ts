@@ -1,14 +1,16 @@
 /* eslint-disable prettier/prettier */
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Task } from 'src/tasks/task.entity';
+import * as config from 'config';
+
+const dbConfig = config.get('db');
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
-  type: 'mysql',
-  host: 'localhost',
-  port: 3306,
-  username: 'root',
-  password: 'root@123Admin',
-  database: 'taskmanagement',
+  type: dbConfig.type,
+  host: dbConfig.host,
+  port: dbConfig.port,
+  username: dbConfig.username,
+  password: dbConfig.password,
+  database: dbConfig.database,
   entities: [__dirname + '/../**/*.entity.{ts,js}'],
-  synchronize: true,
+  synchronize: dbConfig.synchronize,
 };
