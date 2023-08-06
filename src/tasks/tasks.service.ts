@@ -17,7 +17,7 @@ export class TasksService {
   // Get Tasks from the DB
   async getTasks(filterDto: GetTasksFilterDTO): Promise<Task[]> {
     const { status, search } = filterDto;
-    const query = this.taskRepo.createQueryBuilder('task');
+    const query = this.taskRepo.createQueryBuilder('task'); // We need a repo for querybuilder
 
     if (status) {
       // :status denotes a variable which is provided in the object in the 2nd argument
