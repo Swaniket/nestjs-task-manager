@@ -6,6 +6,7 @@ import { ETaskStatus } from './task-status.enum';
 import { CreateTaskDTO } from './dto/create-task.dto';
 import { GetTasksFilterDTO } from './dto/get-tasks-filter.dto';
 import { Task } from './task.entity';
+import { User } from 'src/auth/user.entity';
 
 @Injectable()
 export class TasksService {
@@ -15,9 +16,11 @@ export class TasksService {
   ) {}
 
   // Get Tasks from the DB
-  async getTasks(filterDto: GetTasksFilterDTO): Promise<Task[]> {
+  async getTasks(filterDto: GetTasksFilterDTO, user: User): Promise<Task[]> {
     const { status, search } = filterDto;
     const query = this.taskRepo.createQueryBuilder('task'); // We need a repo for querybuilder
+
+    query.where('task.userId = :userId', { userId: user.id });
 
     if (status) {
       // :status denotes a variable which is provided in the object in the 2nd argument
@@ -36,8 +39,11 @@ export class TasksService {
   }
 
   // Get tasks by ID from DB
-  async getTaskById(id: number): Promise<Task> {
-    const task = await this.entityManager.findOneBy(Task, { id: id });
+  async getTaskById(id: number, user: User): Promise<Task> {
+    const task = await this.entityManager.findOneBy(Task, {
+      id: id,
+      userId: user.id,
+    });
 
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
@@ -47,7 +53,7 @@ export class TasksService {
   }
 
   // Create New task in DB
-  async createNewTask(createTaskDto: CreateTaskDTO): Promise<Task> {
+  async createNewTask(createTaskDto: CreateTaskDTO, user: User): Promise<Task> {
     const { title, desc } = createTaskDto;
 
     const task = new Task();
@@ -55,14 +61,20 @@ export class TasksService {
     task.title = title;
     task.desc = desc;
     task.status = ETaskStatus.OPEN;
+    task.user = user;
     await this.entityManager.save(task);
+
+    delete task.user;
 
     return task;
   }
 
   // Delete a task in DB
-  async deleteTaskById(id: number): Promise<void> {
-    const result = await this.entityManager.delete(Task, { id: id });
+  async deleteTaskById(id: number, user: User): Promise<void> {
+    const result = await this.entityManager.delete(Task, {
+      id: id,
+      userId: user.id,
+    });
 
     if (result.affected === 0) {
       throw new NotFoundException(`Task with ID ${id} not found`);
@@ -70,8 +82,12 @@ export class TasksService {
   }
 
   // Update task status in DB
-  async updateTaskStatus(id: number, status: ETaskStatus): Promise<Task> {
-    const task = await this.getTaskById(id);
+  async updateTaskStatus(
+    id: number,
+    status: ETaskStatus,
+    user: User,
+  ): Promise<Task> {
+    const task = await this.getTaskById(id, user);
     task.status = status;
     await this.entityManager.save(task);
     return task;
