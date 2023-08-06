@@ -8,10 +8,15 @@ import * as bcrypt from 'bcrypt';
 import { EntityManager } from 'typeorm';
 import { AuthCredentialsDTO } from './dto/auth-credentials.dto';
 import { User } from './user.entity';
+import { JwtService } from '@nestjs/jwt';
+import { IJwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly entityManager: EntityManager) {}
+  constructor(
+    private readonly entityManager: EntityManager,
+    private jwtService: JwtService,
+  ) {}
 
   private async hashPassword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);
@@ -51,11 +56,18 @@ export class AuthService {
     }
   }
 
-  async signIn(authCredentailsDto: AuthCredentialsDTO) {
-    const result = await this.validateUserPassword(authCredentailsDto);
+  async signIn(
+    authCredentailsDto: AuthCredentialsDTO,
+  ): Promise<{ accessToken: string }> {
+    const username = await this.validateUserPassword(authCredentailsDto);
 
-    if (!result) {
+    if (!username) {
       throw new UnauthorizedException('Invalid Credentails');
     }
+
+    const payload: IJwtPayload = { username };
+    const accessToken = await this.jwtService.sign(payload);
+
+    return { accessToken };
   }
 }
